@@ -15,6 +15,7 @@
       1,
       {
         "trailingComma": "es5",
+        "no-continue": false,
         "singleQuote": true,
         "semi": true
       }

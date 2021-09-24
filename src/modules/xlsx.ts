@@ -1,48 +1,32 @@
 /* eslint-disable no-continue */
 const XLSX = require('xlsx');
 
+interface keyable {
+  [key: string]: any;
+}
 exports.xlsxToJs = (filePath: string) => {
   const workbook = XLSX.readFile(filePath);
   const sheetNameList = workbook.SheetNames;
+  console.log(sheetNameList);
 
-  const sheets: object[] = XLSX.utils.sheet_to_json(
-    workbook.Sheets[sheetNameList[0]]
+  const commentsData: object[] = XLSX.utils.sheet_to_json(
+    workbook.Sheets[sheetNameList[0]],
+    { raw: false, dateNF: 'yyyy-mm-dd' }
   );
 
-  sheets.forEach((r) => {
-    console.log(r);
+  const postsData: object[] = XLSX.utils.sheet_to_json(
+    workbook.Sheets[sheetNameList[1]],
+    { raw: false, dateNF: 'yyyy-mm-dd' }
+  );
+
+  const posts: object[] = postsData.map((p: keyable) => {
+    const post: keyable = { ...p };
+    post.id = p.postID;
+    post.type = 'post';
+    return post;
   });
 
-  // sheetNameList.forEach((y: string) => {
-  //   const worksheet = workbook.Sheets[y];
-  //   const headers: any = {};
-  //   const data: any[] = [];
-  //   Object.keys(worksheet).forEach((z: any) => {
-  //     // if (z[0] === '!') break;
-  //     // parse out the column, row, and value
-  //     let tt: number = 0;
-  //     for (let i: number = 0; i < z.length; i += 1) {
-  //       if (!Number.isNaN(z[i])) {
-  //         tt = i;
-  //       }
-  //     }
+  console.log(posts);
 
-  //     const col: string = z[0];
-  //     const row: number = Number(z.substring(1, tt));
-  //     console.log(z, col, row);
-  //     const value: any = worksheet[z].v;
-  //     // store header names
-  //     if (row === 1 && value) {
-  //       headers[col] = value;
-  //     }
-
-  //     if (!data[row]) data[row] = {};
-  //     data[row][headers[col]] = value;
-  //   });
-  //   // drop those first two rows which are empty
-  //   data.shift();
-  //   data.shift();
-  //   sheets[y] = data;
-  // });
-  return sheets;
+  return [...posts, ...commentsData];
 };

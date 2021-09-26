@@ -9,6 +9,6 @@ exports.fileUpload = (req: Request, res: Response) => {
   } else {
     console.log(file);
     const fileData = xlsxToJs(file.path);
-    res.status(201).json({ fileData });
+    res.status(201).json({ ...fileData });
   }
 };

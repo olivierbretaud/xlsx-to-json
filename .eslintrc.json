@@ -17,7 +17,8 @@
         "trailingComma": "es5",
         "no-continue": false,
         "singleQuote": true,
-        "semi": true
+        "semi": true,
+        "no-underscore-dangle": false
       }
     ],
     "no-console": 0

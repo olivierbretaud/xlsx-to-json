@@ -8,6 +8,6 @@ exports.fileUpload = (req: Request, res: Response) => {
     res.status(400).json({ message: 'file can not be empty' });
   } else {
     const fileData = xlsxToJs(file.path);
-    res.status(201).json({ fileData });
+    res.status(201).json({ ...fileData });
   }
 };

@@ -3,13 +3,14 @@
 const XLSX = require('xlsx');
 
 interface CommentData {
-  [key: string]: string
+  [key: string]: any
 }
 
 interface Post {
   id: string;
   type: string;
   size: number;
+  postsCount?: number;
   category: string;
   aime?: string;
   adore?: string;
@@ -25,6 +26,13 @@ interface Post {
   insulting?: number; 
   mocking?: number;
   note?: string;
+}
+
+interface Author {
+  id: any;
+  type: string;
+  size: number;
+  posts: string[];
 }
 
 interface Link {
@@ -44,6 +52,7 @@ exports.xlsxToJs = (filePath: string) => {
 
   let posts: Post[] = [];
   const comments: CommentData[] = [];
+  let authors: Author[] = [];
   const links: Link[] = [];
 
   commentsDatas.forEach((c, i) => {
@@ -65,16 +74,29 @@ exports.xlsxToJs = (filePath: string) => {
           share: c?.share,
         });
       }
+      if(!authors.find((p) => p.id === c['Facebook User ID'])) {
+        authors.push({
+          id : c['Facebook User ID'],
+          type: 'author',
+          posts: [],
+          size: 8,
+        });
+      }
+      console.log(c);
+
       comments.push({
         id: commentId,
         type: 'comment',
+        size: 5,
+        author: c['Facebook User ID'],
+        category: posts.find((p) => p.id === id)?.category,
         post: id,
         ...c
       });
-      links.push({
-        source: id,
-        target: commentId,
-      });
+      // links.push({
+      //   source: id,
+      //   target: commentId,
+      // });
     }
   });
 
@@ -83,7 +105,8 @@ exports.xlsxToJs = (filePath: string) => {
 
   posts = posts.map((p) => {
     const postComments = comments.filter((c) => c.post === p.id);
-    const size = postComments.length
+    const postsCount = postComments.length
+    const size = 12;
     const disqualifying = postComments.filter((c) => c?.disqualifiant).length
     const politicalOpposition = postComments.filter((c) => c['oposition politique']).length
     const harassment = postComments.filter((c) => c?.Harcèlement).length
@@ -93,6 +116,7 @@ exports.xlsxToJs = (filePath: string) => {
     // const women = postComments.filter((c) => c?.genre?.toLowerCase() === "femme").length
     return {
       ...p,
+      postsCount,
       size,
       disqualifying,
       politicalOpposition,
@@ -102,8 +126,29 @@ exports.xlsxToJs = (filePath: string) => {
     }
   });
 
+  authors = authors.map((a) => {
+    const author = a
+    comments.forEach((c) => {
+      if (c.author === a.id) {
+        links.push({
+          source: author.id,
+          target: c.id,
+        });
+        if (!author.posts?.find((p) => p === c.post)) {
+          author.posts = [...author.posts , c.post];
+          links.push({
+            source: c.post,
+            target: author.id,
+          });
+        }
+      }
+    });
+    
+    return a
+  })
+
   return {
-    nodes: [...posts,...comments],
+    nodes: [...posts,...comments , ...authors],
     links,
   };
 };

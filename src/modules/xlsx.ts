@@ -26,6 +26,7 @@ interface Post {
   insulting?: number; 
   mocking?: number;
   note?: string;
+  color: string;
 }
 
 interface Author {
@@ -33,17 +34,26 @@ interface Author {
   type: string;
   size: number;
   posts: string[];
+  color: string
 }
 
 interface Link {
   source: string;
   target: string;
+  type: string;
+  color: string;
 }
 
 exports.xlsxToJs = (filePath: string) => {
   const workbook = XLSX.readFile(filePath);
   const sheetNameList = workbook.SheetNames;
   console.log(sheetNameList);
+
+  const color = {
+    post: '#2d1569',
+    comment: '#8567cf',
+    author: '#5A2BD1'
+  };  
 
   const commentsDatas: CommentData[] = XLSX.utils.sheet_to_json(
     workbook.Sheets[sheetNameList[0]],
@@ -72,6 +82,7 @@ exports.xlsxToJs = (filePath: string) => {
           haha: c?.haha,
           grr: c?.grr,
           share: c?.share,
+          color: color.post
         });
       }
       if(!authors.find((p) => p.id === c['Facebook User ID'])) {
@@ -80,6 +91,7 @@ exports.xlsxToJs = (filePath: string) => {
           type: 'author',
           posts: [],
           size: 8,
+          color: color.author
         });
       }
       console.log(c);
@@ -90,6 +102,7 @@ exports.xlsxToJs = (filePath: string) => {
         size: 5,
         author: c['Facebook User ID'],
         category: posts.find((p) => p.id === id)?.category,
+        color: color.comment,
         post: id,
         ...c
       });
@@ -132,13 +145,17 @@ exports.xlsxToJs = (filePath: string) => {
       if (c.author === a.id) {
         links.push({
           source: author.id,
+          color: color.comment,
+          type:'comment',
           target: c.id,
         });
         if (!author.posts?.find((p) => p === c.post)) {
           author.posts = [...author.posts , c.post];
           links.push({
             source: c.post,
+            type: 'post',
             target: author.id,
+            color: color.author
           });
         }
       }

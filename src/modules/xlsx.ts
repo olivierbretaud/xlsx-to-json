@@ -34,7 +34,16 @@ interface Author {
   type: string;
   size: number;
   posts: string[];
-  color: string
+  color: string;
+  name: string;
+  disqualifying: number;
+  politicalOpposition: number;
+  gender: string;
+  age: string;
+  country: string;
+  region: string;
+  study: string;
+  ideologies: string[];
 }
 
 interface Link {
@@ -42,6 +51,7 @@ interface Link {
   target: string;
   type: string;
   color: string;
+  post?: string;
 }
 
 exports.xlsxToJs = (filePath: string) => {
@@ -88,13 +98,22 @@ exports.xlsxToJs = (filePath: string) => {
       if(!authors.find((p) => p.id === c['Facebook User ID'])) {
         authors.push({
           id : c['Facebook User ID'],
+          name: `Author ${i}`, 
           type: 'author',
           posts: [],
           size: 8,
-          color: color.author
+          color: color.author,
+          disqualifying: c?.disqualifiant? 1 : 0,
+          politicalOpposition: c['oposition politique'] ? 1 : 0,
+          gender: c?.genre || 'inconnu',
+          age: c?.age || 'inconnu',
+          country: c?.pays  || 'inconnu',
+          region: c?.region || 'inconnu',
+          study: c?.étude || 'inconnu',
+          ideologies: [c['idéologies'] || null],
+        
         });
       }
-      console.log(c);
 
       comments.push({
         id: commentId,
@@ -102,17 +121,21 @@ exports.xlsxToJs = (filePath: string) => {
         size: 5,
         author: c['Facebook User ID'],
         category: posts.find((p) => p.id === id)?.category,
+        disqualifying: c?.disqualifiant? 1 : 0,
+        politicalOpposition: c['oposition politique'] ? 1 : 0,
+        ideology: c['idéologies'] || null ,
         color: color.comment,
         post: id,
-        ...c
+        comment: c.Comment || null ,
+        url: c['Comment URL'] || null ,
       });
       // links.push({
       //   source: id,
       //   target: commentId,
       // });
     }
+    console.log(c)
   });
-
   // 'disqualifiant',  'Harcèlement' 'Moqueur' 'Moqueur', Insultant , oposition politique
 
 
@@ -143,10 +166,20 @@ exports.xlsxToJs = (filePath: string) => {
     const author = a
     comments.forEach((c) => {
       if (c.author === a.id) {
+        if (c.politicalOpposition) {
+          author.politicalOpposition += 1
+        }
+        if (c.disqualifying) {
+          author.disqualifying += 1
+        }
+        if (c.ideology && author.ideologies.find((i) => i !== c.ideology)) {
+          author.ideologies = [...author.ideologies , c.ideology]
+        }
         links.push({
           source: author.id,
           color: color.comment,
           type:'comment',
+          post: c.post,
           target: c.id,
         });
         if (!author.posts?.find((p) => p === c.post)) {
@@ -161,7 +194,7 @@ exports.xlsxToJs = (filePath: string) => {
       }
     });
     
-    return a
+    return author
   })
 
   return {

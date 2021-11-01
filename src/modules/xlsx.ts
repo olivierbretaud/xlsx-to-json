@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable prettier/prettier */
 /* eslint-disable no-continue */
 const XLSX = require('xlsx');
@@ -95,7 +96,14 @@ exports.xlsxToJs = (filePath: string) => {
           color: color.post
         });
       }
+      const idéologies : string[] = c['idéologies']?.split(',')?.map((s : string) => {
+        if(s[0] === ' ') return s.substring(1);
+        return s;
+      });
+
+      console.log(idéologies)
       if(!authors.find((p) => p.id === c['Facebook User ID'])) {
+        console.log(idéologies)
         authors.push({
           id : c['Facebook User ID'],
           name: `Author ${i}`, 
@@ -110,8 +118,7 @@ exports.xlsxToJs = (filePath: string) => {
           country: c?.pays  || 'inconnu',
           region: c?.region || 'inconnu',
           study: c?.étude || 'inconnu',
-          ideologies: [c['idéologies'] || null],
-        
+          ideologies: idéologies || [],
         });
       }
 
@@ -123,18 +130,20 @@ exports.xlsxToJs = (filePath: string) => {
         category: posts.find((p) => p.id === id)?.category,
         disqualifying: c?.disqualifiant? 1 : 0,
         politicalOpposition: c['oposition politique'] ? 1 : 0,
-        ideology: c['idéologies'] || null ,
+        ideologies: idéologies || [],
         color: color.comment,
         post: id,
         comment: c.Comment || null ,
         url: c['Comment URL'] || null ,
+        image: c.Image !== 'No Image' ? c.Image : null ,
+        date: new Date(c['Comment Time']),
       });
+      console.log(c['Comment Time']);
       // links.push({
       //   source: id,
       //   target: commentId,
       // });
     }
-    console.log(c)
   });
   // 'disqualifiant',  'Harcèlement' 'Moqueur' 'Moqueur', Insultant , oposition politique
 
@@ -162,6 +171,8 @@ exports.xlsxToJs = (filePath: string) => {
     }
   });
 
+  let idelologiesList : string[] = [];
+
   authors = authors.map((a) => {
     const author = a
     comments.forEach((c) => {
@@ -172,9 +183,18 @@ exports.xlsxToJs = (filePath: string) => {
         if (c.disqualifying) {
           author.disqualifying += 1
         }
-        if (c.ideology && author.ideologies.find((i) => i !== c.ideology)) {
-          author.ideologies = [...author.ideologies , c.ideology]
+        if (c.ideologies) {
+          c.ideologies.forEach((i : string) => {
+            if (!author.ideologies.find((ai : string) => ai === i) && i !== "") {
+              author.ideologies = [...author.ideologies , c.ideology]
+            }
+            if (i !== "" && !idelologiesList.find((ai : string) => ai === i)) {
+              console.log(i)
+              idelologiesList = [...idelologiesList , i]
+            }
+          })
         }
+        c.author = author
         links.push({
           source: author.id,
           color: color.comment,
@@ -198,6 +218,9 @@ exports.xlsxToJs = (filePath: string) => {
   })
 
   return {
+    list: {
+      idelologies: idelologiesList,
+    },
     nodes: [...posts,...comments , ...authors],
     links,
   };

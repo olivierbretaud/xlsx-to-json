@@ -188,9 +188,8 @@ exports.xlsxToJs = (filePath: string) => {
             if (!author.ideologies.find((ai : string) => ai === i) && i !== "") {
               author.ideologies = [...author.ideologies , c.ideology]
             }
-            if (i !== "" && !idelologiesList.find((ai : string) => ai === i)) {
-              console.log(i)
-              idelologiesList = [...idelologiesList , i]
+            if (i !== "" && !idelologiesList.find((ai : string) => ai === i.trimEnd())) {
+              idelologiesList = [...idelologiesList , i.trimEnd()]
             }
           })
         }

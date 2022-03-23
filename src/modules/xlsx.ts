@@ -82,10 +82,11 @@ exports.xlsxToJs = (filePath: string) => {
   let catergoriesList: string[] = [];
 
   commentsDatas.forEach((c, i) => {
+    console.log(c);
     const id = c['Comment ID']?.split('_')[0];
     const commentId = `${c['Comment ID']}-${i}`;
     if (id) {
-      if(!posts.find((p) => p.id === id)) {
+      if(!posts.find((p) => p.id === id) && c['catégorie']) {
         const catergory = c['catégorie'].trimEnd();
         if (catergory) {
           if (!catergoriesList.find((ai : string) => ai === catergory)) {
@@ -107,7 +108,7 @@ exports.xlsxToJs = (filePath: string) => {
           color: color.post
         });
       }
-      const ideologies : string[] = c['idéologies']?.split(',')?.map((s : string) => {
+      const ideologies : string[] = c.ideologias?.split(',')?.map((s : string) => {
         if(s[0] === ' ') return s.substring(1);
         return s;
       });
@@ -123,13 +124,13 @@ exports.xlsxToJs = (filePath: string) => {
           color: color.author,
           disqualifying: c?.disqualifiant? 1 : 0,
           politicalOpposition: c['oposition politique'] ? 1 : 0,
-          gender: c?.genre?.trimEnd() || "S/I",
-          age: c?.age ? c?.age.replace(/\s/g, '').replace('à','-') : "S/I",
-          country: c?.pays?.trimEnd()  || "S/I",
+          gender: c['género']?.trimEnd() || "S/I",
+          age: c?.edad ? c?.edad.replace(/\s/g, '').replace('à','-') : "S/I",
+          country: c?.pais?.trimEnd()  || "S/I",
           region: c?.region?.trimEnd() || "S/I",
           banner: c?.banner?.trimEnd() || "S/I",
-          study: c?.étude?.trimEnd() || "S/I",
-          job: c?.profession ? c?.profession?.trimEnd() : "S/I",
+          study: c?.estudios?.trimEnd() || "S/I",
+          job: c?. profesion ? c?. profesion?.trimEnd() : "S/I",
           ideologies: ideologies?.length ? ideologies : [],
         });
       }
@@ -284,7 +285,7 @@ exports.xlsxToJs = (filePath: string) => {
       genders: sortAlpha(gendersList).reverse(),
       countries: sortAlpha(countriesList).reverse(),
       studies: sortAlpha(studiesList).reverse(),
-      ctegories: sortAlpha(catergoriesList),
+      categories: sortAlpha(catergoriesList),
     },
     nodes: [...posts,...comments , ...authors],
     links,

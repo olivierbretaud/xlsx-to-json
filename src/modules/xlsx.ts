@@ -155,6 +155,7 @@ exports.xlsxToJs = (filePath: string) => {
       if (posts.find((p) => p.id === id)) {
         comments.push({
           id: commentId,
+          comment_id: c['Comment ID'],
           type: 'comment',
           size: 5,
           author: c['Facebook User ID'].trimEnd(),

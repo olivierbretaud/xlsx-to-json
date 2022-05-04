@@ -29,6 +29,7 @@ interface Post {
   note?: string;
   color: string;
   authors?: string[];
+  date?: Date;
 }
 
 interface Author {
@@ -82,7 +83,6 @@ exports.xlsxToJs = (filePath: string) => {
   let catergoriesList: string[] = [];
 
   commentsDatas.forEach((c, i) => {
-    console.log(c);
     const id = c['Comment ID']?.split('_')[0];
     const commentId = `${c['Comment ID']}-${i}`;
     if (id) {
@@ -105,7 +105,8 @@ exports.xlsxToJs = (filePath: string) => {
           haha: c?.haha,
           grr: c?.grr,
           share: c?.share,
-          color: color.post
+          color: color.post,
+          date: new Date(c.date),
         });
       }
       const ideologies : string[] = c.ideologias?.split(',')?.map((s : string) => {
@@ -113,9 +114,9 @@ exports.xlsxToJs = (filePath: string) => {
         return s;
       });
 
-      if(!authors.find((p) => p.id === c['Facebook User ID'])) {
+      if(!authors.find((p) => p.id === c['Facebook User ID'].trimEnd())) {
         authors.push({
-          id : c['Facebook User ID'],
+          id : c['Facebook User ID'].trimEnd(),
           name: c.Name, 
           code: `Author ${i}`, 
           type: 'author',
@@ -130,27 +131,45 @@ exports.xlsxToJs = (filePath: string) => {
           region: c?.region?.trimEnd() || "S/I",
           banner: c?.banner?.trimEnd() || "S/I",
           study: c?.estudios?.trimEnd() || "S/I",
-          job: c?. profesion ? c?. profesion?.trimEnd() : "S/I",
+          job: c?.profesion ? c?.profesion?.trimEnd() : "S/I",
           ideologies: ideologies?.length ? ideologies : [],
         });
       }
+      const  authorIndex: number = authors.findIndex((p) => p.id === c['Facebook User ID'].trimEnd());
+      if(authorIndex !== -1) {
+        authors[authorIndex] = {
+          ...authors[authorIndex],
+          disqualifying: c?.disqualifiant? 1 : 0,
+          politicalOpposition: c['oposition politique'] ? 1 : 0,
+          gender: c['género']?.trimEnd() || authors[authorIndex].gender,
+          age: c?.edad ? c?.edad.replace(/\s/g, '').replace('à','-') : authors[authorIndex].age,
+          country: c?.pais?.trimEnd()  || authors[authorIndex].country,
+          region: c?.region?.trimEnd() || authors[authorIndex].region,
+          banner: c?.banner?.trimEnd() || authors[authorIndex].banner,
+          study: c?.estudios?.trimEnd() || authors[authorIndex].study,
+          job: c?.profesion ? c?.profesion?.trimEnd() : authors[authorIndex].job ,
+          ideologies: ideologies?.length ? ideologies : authors[authorIndex].ideologies,
+        };
+      }
 
-      comments.push({
-        id: commentId,
-        type: 'comment',
-        size: 5,
-        author: c['Facebook User ID'],
-        category: posts.find((p) => p.id === id)?.category,
-        disqualifying: c?.disqualifiant? 1 : 0,
-        politicalOpposition: c['oposition politique'] ? 1 : 0,
-        ideologies: ideologies || [],
-        color: color.comment,
-        post: id,
-        comment: c.Comment || null ,
-        url: c['Comment URL'] || null ,
-        image: c.Image !== 'No Image' ? c.Image : null ,
-        date: new Date(c['Comment Time']),
-      });
+      if (posts.find((p) => p.id === id)) {
+        comments.push({
+          id: commentId,
+          type: 'comment',
+          size: 5,
+          author: c['Facebook User ID'].trimEnd(),
+          category: posts.find((p) => p.id === id)?.category,
+          disqualifying: c?.disqualifiant? 1 : 0,
+          politicalOpposition: c['oposition politique'] ? 1 : 0,
+          ideologies: ideologies || [],
+          color: color.comment,
+          post: id,
+          comment: c.Comment || null ,
+          url: c['Comment URL'] || null ,
+          image: c.Image !== 'No Image' ? c.Image : null ,
+          date: new Date(c['Comment Time']),
+        });
+      }
     }
   });
   // 'disqualifiant',  'Harcèlement' 'Moqueur' 'Moqueur', Insultant , oposition politique
@@ -227,28 +246,30 @@ exports.xlsxToJs = (filePath: string) => {
           })
         }
         c.author = author
-        links.push({
-          source: c.id,
-          color: color.comment,
-          type:'comment',
-          post: c.post,
-          target: author.id,
-        });
-        links.push({
-          source: c.post,
-          type: 'post',
-          target: c.id,
-          author: author.id,
-          color: color.author
-        });
-        if (!author.posts?.find((p) => p === c.post)) {
-          author.posts = [...author.posts , c.post];
+        if (c.id && author.id) {
+          links.push({
+            source: c.id,
+            color: color.comment,
+            type:'comment',
+            post: c.post,
+            target: author.id,
+          });
           links.push({
             source: c.post,
-            type: 'author',
-            target: author.id,
+            type: 'post',
+            target: c.id,
+            author: author.id,
             color: color.author
           });
+          if (!author.posts?.find((p) => p === c.post)) {
+            author.posts = [...author.posts , c.post];
+            links.push({
+              source: c.post,
+              type: 'author',
+              target: author.id,
+              color: color.author
+            });
+          }
         }
       }
     });
@@ -277,7 +298,9 @@ exports.xlsxToJs = (filePath: string) => {
     });
     return result;
   };
-
+  console.log('205 2574 2206');
+  console.log('207 4953 2206');
+  console.log(posts.length, comments.length ,authors.length )
   return {
     list: {
       idelologies: idelologiesList,
@@ -287,7 +310,7 @@ exports.xlsxToJs = (filePath: string) => {
       studies: sortAlpha(studiesList).reverse(),
       categories: sortAlpha(catergoriesList),
     },
-    nodes: [...posts,...comments , ...authors],
+    nodes: [...posts, ...comments , ...authors],
     links,
   };
 };
